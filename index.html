@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Reference for applications that send SMS through the SMPP Gateway: endpoints, fields, examples and ready-to-copy requests.">
+<style>html{color-scheme:light dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>SMPP Gateway Message API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: a reference manual — fixed index rail on the left, one reading column of endpoints and types on the right; stacks on phones. */
+:root {
+  --paper: #f5f7f8;
+  --sheet: #ffffff;
+  --ink: #17222b;
+  --muted: #5b6b77;
+  --rule: #d9e1e6;
+  --signal: #0b6e74;          /* the platform's accent: a deep sea-green, the colour of a bound connection */
+  --signal-soft: #e1f0f0;
+  --code-bg: #eef2f4;
+  --get: #1f6fb2;  --get-soft: #e3eef8;
+  --post: #2c7a3f; --post-soft: #e3f2e7;
+  --warn: #9a5b00; --warn-soft: #fbf0dc;
+  --bad: #a83232;  --bad-soft: #f8e5e5;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0f1519; --sheet: #151d22; --ink: #e3eaee; --muted: #93a4ae; --rule: #26333b;
+    --signal: #4fbfc4; --signal-soft: #143033; --code-bg: #1b252b;
+    --get: #6fb0ec; --get-soft: #162a3b; --post: #6cc685; --post-soft: #15301e;
+    --warn: #e2a64a; --warn-soft: #33270f; --bad: #ec8080; --bad-soft: #3a1b1b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0f1519; --sheet: #151d22; --ink: #e3eaee; --muted: #93a4ae; --rule: #26333b;
+  --signal: #4fbfc4; --signal-soft: #143033; --code-bg: #1b252b;
+  --get: #6fb0ec; --get-soft: #162a3b; --post: #6cc685; --post-soft: #15301e;
+  --warn: #e2a64a; --warn-soft: #33270f; --bad: #ec8080; --bad-soft: #3a1b1b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 15px/1.6 var(--body); }
+a { color: var(--signal); }
+code, pre, .mono { font-family: var(--mono); font-size: 0.86em; }
+:not(pre) > code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; overflow-wrap: anywhere; }
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+
+.shell { display: grid; grid-template-columns: 250px minmax(0, 1fr); min-height: 100%; }
+.rail { position: sticky; top: env(safe-area-inset-top, 0px); align-self: start; height: 100vh; overflow-y: auto;
+  border-right: 1px solid var(--rule); padding-block: 28px; padding-inline: 20px; background: var(--paper); }
+.rail h2 { font: 600 11px/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 22px 0 8px; }
+.rail ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.rail a { display: flex; gap: 8px; align-items: baseline; padding: 4px 8px; border-radius: 6px; color: var(--ink); text-decoration: none; font-size: 13.5px; }
+.rail a:hover { background: var(--signal-soft); }
+.rail .brand { font: 600 18px/1.2 var(--display); color: var(--ink); text-decoration: none; padding: 0; }
+.rail .ver { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+main { padding-block: 40px 80px; padding-inline: clamp(16px, 4vw, 56px); min-width: 0; }
+.col { max-width: 880px; display: grid; gap: 44px; }
+h1 { font: 600 clamp(28px, 4vw, 38px)/1.1 var(--display); margin: 0; text-wrap: balance; }
+h2.sec { font: 600 24px/1.2 var(--display); margin: 0 0 4px; text-wrap: balance; }
+h3 { font: 600 17px/1.3 var(--display); margin: 0; }
+p { margin: 0; max-width: 68ch; }
+.lede { color: var(--muted); font-size: 16.5px; }
+.prose { display: grid; gap: 12px; }
+.prose h3 { margin-top: 10px; }
+.eyebrow { font: 600 11px/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+.hostbar { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; padding: 14px 16px; background: var(--sheet); border: 1px solid var(--rule); border-radius: 10px; }
+.hostbar label { font-size: 13px; color: var(--muted); }
+.hostbar input { font: 14px var(--mono); padding: 7px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--paper); color: var(--ink); min-width: 0; flex: 1 1 220px; }
+.hostbar .hint { flex-basis: 100%; font-size: 12.5px; color: var(--muted); }
+
+.states { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font: 500 13px var(--mono); }
+.states span.s { padding: 3px 9px; border-radius: 999px; background: var(--signal-soft); color: var(--signal); }
+.states span.f { padding: 3px 9px; border-radius: 999px; background: var(--code-bg); color: var(--muted); }
+.states i { color: var(--muted); font-style: normal; }
+
+.op { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 22px clamp(16px, 3vw, 26px); display: grid; gap: 18px; scroll-margin-top: 16px; }
+.ophead { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
+.method { font: 600 12px/1 var(--mono); letter-spacing: 0.04em; padding: 6px 9px; border-radius: 5px; }
+.method.GET { color: var(--get); background: var(--get-soft); }
+.method.POST { color: var(--post); background: var(--post-soft); }
+.path { font: 500 15.5px var(--mono); overflow-wrap: anywhere; }
+.perm { margin-left: auto; font: 12px var(--mono); color: var(--muted); }
+.block { display: grid; gap: 8px; }
+.block > .eyebrow { margin-bottom: 2px; }
+
+.tablewrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th { text-align: left; font: 600 11px var(--body); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); padding: 8px 12px; border-bottom: 1px solid var(--rule); background: var(--paper); }
+td { padding: 9px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.name { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+td.type { font-family: var(--mono); font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+td.desc { min-width: 240px; }
+.req { color: var(--bad); font: 600 10.5px var(--body); letter-spacing: 0.05em; text-transform: uppercase; margin-left: 6px; }
+.enum { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.enum code { font-size: 11.5px; }
+
+.codebox { position: relative; background: var(--code-bg); border-radius: 8px; }
+.codebox pre { margin: 0; padding: 14px 16px; overflow-x: auto; line-height: 1.5; white-space: pre; }
+.copy { position: absolute; top: 8px; right: 8px; font: 500 12px var(--body); padding: 4px 9px; border-radius: 5px; border: 1px solid var(--rule); background: var(--sheet); color: var(--ink); cursor: pointer; }
+.copy:hover { border-color: var(--signal); }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tabs button { font: 500 12.5px var(--body); padding: 5px 10px; border-radius: 999px; border: 1px solid var(--rule); background: transparent; color: var(--muted); cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--signal-soft); color: var(--signal); border-color: transparent; }
+
+.responses { display: grid; gap: 6px; }
+details.resp { border: 1px solid var(--rule); border-radius: 8px; }
+details.resp summary { display: flex; gap: 12px; align-items: baseline; padding: 9px 12px; cursor: pointer; list-style: none; }
+details.resp summary::-webkit-details-marker { display: none; }
+details.resp summary::before { content: "▸"; color: var(--muted); font-size: 11px; transition: transform .15s; }
+details.resp[open] summary::before { transform: rotate(90deg); }
+details.resp > div { padding: 0 12px 12px; display: grid; gap: 8px; }
+.code { font: 600 13px var(--mono); min-width: 32px; }
+.code.c2 { color: var(--post); } .code.c4 { color: var(--warn); } .code.c5 { color: var(--bad); }
+.schema-link { font-family: var(--mono); font-size: 12.5px; }
+
+.types { display: grid; gap: 16px; }
+.type { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 18px clamp(16px, 3vw, 22px); display: grid; gap: 12px; scroll-margin-top: 16px; }
+.type h3 { font-family: var(--mono); font-weight: 500; font-size: 15px; }
+footer { color: var(--muted); font-size: 12.5px; }
+
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+  .rail { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--rule); padding-inline: 16px; }
+  .rail .navgroups { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 20px; }
+  .perm { margin-left: 0; flex-basis: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+
+<div class="shell">
+  <nav class="rail" aria-label="Contents">
+    <a class="brand" href="#top">SMPP Gateway<br>Message API</a>
+    <div class="ver" id="ver"></div>
+    <div class="navgroups">
+      <div><h2>Guide</h2><ul id="nav-guide"></ul></div>
+      <div><h2>Endpoints</h2><ul id="nav-ops"></ul></div>
+      <div><h2>Data types</h2><ul id="nav-types"></ul></div>
+    </div>
+  </nav>
+  <main id="top">
+    <div class="col">
+      <header class="prose">
+        <span class="eyebrow">API reference</span>
+        <h1 id="title"></h1>
+        <p class="lede" id="lede"></p>
+      </header>
+      <div class="hostbar">
+        <label for="host">Your platform address</label>
+        <input id="host" type="text" spellcheck="false" autocomplete="off" value="smppgw.example.com" aria-describedby="host-hint">
+        <span class="hint" id="host-hint">Every example below uses this address. Your operator gives you the address and an API key.</span>
+      </div>
+      <section class="prose" id="guide" aria-label="Guide"></section>
+      <section aria-labelledby="ops-h" style="display:grid;gap:18px">
+        <h2 class="sec" id="ops-h">Endpoints</h2>
+        <div id="ops" style="display:grid;gap:18px"></div>
+      </section>
+      <section aria-labelledby="types-h" style="display:grid;gap:14px">
+        <h2 class="sec" id="types-h">Data types</h2>
+        <p class="lede">The objects the endpoints send and return.</p>
+        <div class="types" id="types"></div>
+      </section>
+      <footer id="foot"></footer>
+    </div>
+  </main>
+</div>
+
+<script type="application/json" id="spec">{"openapi":"3.1.0","info":{"title":"SMPP Gateway — Message Submission API","version":"1.0.0","description":"Submit SMS messages to the SMPP Gateway Management Platform and follow them to delivery.\n\n## Authentication\nEvery call carries an API key in the `X-Api-Key` header. Keys are issued by the platform operator (API keys page), shown\nonce, and carry permissions: `messages.submit` to send, `messages.read` to read, `messages.cancel` to cancel. A key may\nalso be limited to certain senders and source addresses. A key sees only the messages sent with it.\n\n## Delivery is asynchronous\nA successful submission answers **202 Accepted**: the message is stored and queued, not yet delivered. Follow it with\n`GET /api/v1/messages/{publicId}`, or ask the operator to configure a webhook integration for delivery receipts.\nTypical states: `Routing` → `Queued` → `Sending` → `Submitted` → `Delivered`, or a final `Undelivered`,\n`Expired`, `Rejected`, `Failed` or `Cancelled`. `Unknown` means the SMSC may have the message but never confirmed\nit; it is not resent automatically.\n\n## Safe retries\n`requestId` makes a submission idempotent per API key. On a timeout, a network error, a 429 or a 503, send the same\nrequest again with the same `requestId`: you get the original message back (200, `existing: true`) and nothing is sent\ntwice. Use a new `requestId` for a new message.\n\n## Errors\nErrors are `application/problem+json` with `type`, `title`, `status` and a `correlationId` to quote to the operator.\nValidation errors (400) list each problem in `errors` with its field `path` and a stable `code`. 409, 422 and 503\ncarry the reason in `type` (for example `/errors/sender-not-allowed`). You can send your own `X-Correlation-Id` (a\nUUID); it is echoed on the response.\n\n## Limits\nEach key has a submission rate (`rateLimitPerS`, set by the operator); above it the API answers 429. A batch holds at most\n1000 messages."},"servers":[{"url":"https://{host}","variables":{"host":{"default":"smppgw.example.com","description":"Your platform address."}}}],"security":[{"ApiKey":[]}],"tags":[{"name":"Messages","description":"Submit, follow and cancel messages."}],"paths":{"/api/v1/messages":{"post":{"tags":["Messages"],"operationId":"SubmitMessage","summary":"Submit a message","description":"Validates, routes and queues one message. Requires `messages.submit`.","requestBody":{"required":true,"content":{"application/json":{"schema":{"$ref":"#/components/schemas/SubmitMessageRequest"},"examples":{"minimal":{"summary":"A one-time code","value":{"requestId":"7f3c2a9e-58b1-4c1e-9a07-5d2f0b6e1c44","sender":"ACME","destination":"+96170123456","message":"Your code is 4821"}},"unicode":{"summary":"Arabic text (sent as UCS-2)","value":{"requestId":"order-1093-ar","sender":"ACME","destination":"+96170123456","message":"تم شحن طلبك رقم 1093"}},"scheduled":{"summary":"Scheduled, with validity and your reference","value":{"requestId":"reminder-2026-10-02-0915","sender":"ACME","destination":"+96170123456","message":"Reminder: your appointment is tomorrow at 09:15.","scheduledAtUtc":"2026-10-01T18:00:00Z","validityS":3600,"clientReference":"appt-55120","priority":"High"}},"gateway":{"summary":"Through one named gateway only","value":{"requestId":"otp-88231","sender":"ACME","destination":"+96170123456","message":"Your code is 0912","gateway":"STC"}}}}}},"responses":{"200":{"description":"This requestId was already used with the same content: the original message, in its current state. Nothing new is sent.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/MessageAcceptedResult"},"example":{"publicId":"01a0f78b-9160-77db-8997-e0c1605bbf6f","state":"Queued","parts":1,"dataCoding":"Gsm7","routeId":null,"ruleId":null,"gatewayId":335,"forcedConnectionId":null,"existing":true,"requestId":"7f3c2a9e-58b1-4c1e-9a07-5d2f0b6e1c44","messageId":"01a0f78b-9160-77db-8997-e0c1605bbf6f"}}}},"202":{"description":"Accepted: stored and queued for sending.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/MessageAcceptedResult"},"example":{"publicId":"01a0f78b-9160-77db-8997-e0c1605bbf6f","state":"Routing","parts":1,"dataCoding":"Gsm7","routeId":null,"ruleId":null,"gatewayId":null,"forcedConnectionId":null,"existing":false,"requestId":"7f3c2a9e-58b1-4c1e-9a07-5d2f0b6e1c44","messageId":"01a0f78b-9160-77db-8997-e0c1605bbf6f"}}}},"400":{"description":"The request is invalid.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"missingRequestId":{"value":{"type":"/errors/validation","title":"The request is invalid.","status":400,"errors":[{"path":"requestId","code":"request_id_required","message":"requestId is required: a unique id per business request, reused only to retry the same request."}],"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"invalidDestination":{"value":{"type":"/errors/validation","title":"The request is invalid.","status":400,"errors":[{"path":"destination","code":"invalid_destination","message":"Destination must be an international number of 7–15 digits."}],"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"missingSender":{"value":{"type":"/errors/validation","title":"The request is invalid.","status":400,"errors":[{"path":"sender","code":"sender_required","message":"sender is required: the source identity (for example \"MOBIBOX\") the message is sent as."}],"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"textOutsideAlphabet":{"value":{"type":"/errors/validation","title":"The request is invalid.","status":400,"errors":[{"path":"message","code":"message.not_gsm7","message":"Text contains characters outside the GSM 03.38 alphabet."}],"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"tooManyParts":{"value":{"type":"/errors/validation","title":"The request is invalid.","status":400,"errors":[{"path":"message","code":"message.too_many_parts","message":"Message exceeds the maximum number of parts."}],"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"conflictingAlias":{"value":{"type":"/errors/validation","title":"The request is invalid.","status":400,"errors":[{"path":"sender","code":"conflicting_alias","message":"sender and from are the same field; give one of them."}],"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}},"401":{"description":"The API key is missing, unknown, revoked or expired.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"unauthorized":{"value":{"type":"/errors/unauthorized","title":"A valid API key is required.","status":401,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}},"403":{"description":"The key lacks the permission, or is not allowed from the caller's address.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"permission":{"value":{"type":"/errors/forbidden","title":"This API key does not have the messages.submit permission.","status":403,"permission":"messages.submit","correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"address":{"value":{"type":"/errors/forbidden","title":"This API key is not allowed from the caller's address.","status":403,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}},"409":{"description":"Refused for the request as a whole.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"idempotencyConflict":{"value":{"type":"/errors/idempotency-conflict","title":"This requestId was already used for a different request; use a new requestId for new content.","status":409,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"senderNotAllowed":{"value":{"type":"/errors/sender-not-allowed","title":"The sender is unknown or not allowed.","status":409,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"senderDisabled":{"value":{"type":"/errors/sender-disabled","title":"The sender is disabled.","status":409,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"requestExpired":{"value":{"type":"/errors/request-expired","title":"This requestId belongs to a message that no longer exists (retention); use a new requestId.","status":409,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}},"422":{"description":"The message cannot be routed as asked.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"noRoute":{"value":{"type":"/errors/no-route","title":"No routing rule matches the message and no gateway is available to route it.","status":422,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"gatewayNotFound":{"value":{"type":"/errors/gateway-not-found","title":"The requested gateway does not exist (match its code or name).","status":422,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"gatewayDisabled":{"value":{"type":"/errors/gateway-disabled","title":"The requested gateway is disabled.","status":422,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"senderNotAllowedOnGateway":{"value":{"type":"/errors/sender-not-allowed-on-gateway","title":"The sender is not allowed on the requested gateway.","status":422,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}},"429":{"description":"Too many requests for this key (its rateLimitPerS) or for the caller.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"rateLimited":{"value":{"type":"/errors/rate-limited","title":"Too many requests.","status":429,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}},"503":{"description":"The platform cannot take the message now. Retry later with the same requestId.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"queueFull":{"value":{"type":"/errors/queue-full","title":"The outbound queue is full; retry later.","status":503,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"gatewayUnavailable":{"value":{"type":"/errors/gateway-unavailable","title":"The requested gateway has no usable connection right now (unavailable or in maintenance); it is not replaced by another gateway.","status":503,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"databaseUnavailable":{"value":{"type":"/errors/db-unavailable","title":"The database is not reachable; retry shortly.","status":503,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}},"headers":{"Retry-After":{"description":"Seconds to wait before retrying.","schema":{"type":"integer","example":5}}}}}},"get":{"tags":["Messages"],"operationId":"ListMessages","summary":"Search messages","description":"Messages sent with this key, newest first, one page at a time. Requires `messages.read`.","parameters":[{"name":"requestId","in":"query","schema":{"type":"string"},"description":"The message submitted with this requestId."},{"name":"clientReference","in":"query","schema":{"type":"string"}},{"name":"dst","in":"query","schema":{"type":"string"},"description":"Destination number."},{"name":"state","in":"query","schema":{"$ref":"#/components/schemas/MessageState"}},{"name":"from","in":"query","schema":{"type":"string","format":"date-time"},"description":"Accepted at or after (UTC, inclusive). A timestamp without an offset is UTC. Default: 24 hours ago."},{"name":"to","in":"query","schema":{"type":"string","format":"date-time"},"description":"Accepted before (UTC, exclusive, so adjacent windows never repeat a message). Must be later than `from`, or the request is refused with 400. Default: now."},{"name":"senderId","in":"query","schema":{"type":"integer","format":"int32"}},{"name":"gatewayId","in":"query","schema":{"type":"integer","format":"int32"}},{"name":"cursor","in":"query","schema":{"type":"string"},"description":"`nextCursor` from the previous page."},{"name":"limit","in":"query","schema":{"type":"integer","minimum":1,"maximum":500,"default":50}}],"responses":{"200":{"description":"One page; `nextCursor` is null on the last.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/PageOfMessageSummary"}}}},"400":{"description":"A parameter is invalid.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"invalid":{"value":{"type":"/errors/validation","title":"The request is invalid.","status":400,"errors":[{"path":"state","code":"invalid","message":"The value is not valid."}],"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}},"401":{"description":"The API key is missing, unknown, revoked or expired.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"unauthorized":{"value":{"type":"/errors/unauthorized","title":"A valid API key is required.","status":401,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}},"403":{"description":"The key lacks the permission, or is not allowed from the caller's address.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"permission":{"value":{"type":"/errors/forbidden","title":"This API key does not have the messages.submit permission.","status":403,"permission":"messages.submit","correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"address":{"value":{"type":"/errors/forbidden","title":"This API key is not allowed from the caller's address.","status":403,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}},"503":{"description":"The platform cannot take the message now. Retry after the Retry-After delay with the same requestId.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"queueFull":{"value":{"type":"/errors/queue-full","title":"The outbound queue is full; retry later.","status":503,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"databaseUnavailable":{"value":{"type":"/errors/db-unavailable","title":"The database is not reachable; retry shortly.","status":503,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}},"headers":{"Retry-After":{"description":"Seconds to wait before retrying.","schema":{"type":"integer","example":5}}}}}}},"/api/v1/messages/batch":{"post":{"tags":["Messages"],"operationId":"SubmitBatch","summary":"Submit up to 1000 messages","description":"Each message is processed as by `POST /api/v1/messages`, with its own `requestId`, and gets its own result: the answer is **207** with one entry per index whose `status` is what the single call would have answered (202, 200, 400, 409, 422, 503…). Retry only the entries that failed, with the same requestIds. Requires `messages.submit`.","requestBody":{"required":true,"content":{"application/json":{"schema":{"type":"object","required":["messages"],"properties":{"messages":{"type":"array","minItems":1,"maxItems":1000,"items":{"$ref":"#/components/schemas/SubmitMessageRequest"}}}},"example":{"messages":[{"requestId":"promo-0001","sender":"ACME","destination":"+96170123457","message":"Batch one"},{"requestId":"promo-0002","sender":"ACME","destination":"9","message":"Batch two"}]}}}},"responses":{"207":{"description":"One result per message, in request order.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/BatchResponse"},"example":{"results":[{"index":0,"status":202,"publicId":"01a0f78b-91d6-750c-ae56-d7c68c717a76","problem":null},{"index":1,"status":400,"publicId":null,"problem":"Destination must be an international number of 7–15 digits."}]}}}},"400":{"description":"The batch is empty or holds more than 1000 messages; nothing was processed.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"size":{"value":{"type":"/errors/validation","title":"A batch holds between 1 and 1000 messages.","status":400,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}},"401":{"description":"The API key is missing, unknown, revoked or expired.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"unauthorized":{"value":{"type":"/errors/unauthorized","title":"A valid API key is required.","status":401,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}},"403":{"description":"The key lacks the permission, or is not allowed from the caller's address.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"permission":{"value":{"type":"/errors/forbidden","title":"This API key does not have the messages.submit permission.","status":403,"permission":"messages.submit","correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"address":{"value":{"type":"/errors/forbidden","title":"This API key is not allowed from the caller's address.","status":403,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}},"429":{"description":"Too many requests for this key (its rateLimitPerS) or for the caller.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"rateLimited":{"value":{"type":"/errors/rate-limited","title":"Too many requests.","status":429,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}}}}},"/api/v1/messages/{publicId}":{"get":{"tags":["Messages"],"operationId":"GetMessage","summary":"Get a message with its parts, attempts and receipts","description":"The message, each part, every send attempt, the delivery receipts and the timeline. Requires `messages.read`.","parameters":[{"name":"publicId","in":"path","required":true,"description":"The message id returned at submission (`publicId`).","schema":{"type":"string","format":"uuid"}}],"responses":{"200":{"description":"The message.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/MessageDetailView"}}}},"401":{"description":"The API key is missing, unknown, revoked or expired.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"unauthorized":{"value":{"type":"/errors/unauthorized","title":"A valid API key is required.","status":401,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}},"403":{"description":"The key lacks the permission, or is not allowed from the caller's address.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"permission":{"value":{"type":"/errors/forbidden","title":"This API key does not have the messages.submit permission.","status":403,"permission":"messages.submit","correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"address":{"value":{"type":"/errors/forbidden","title":"This API key is not allowed from the caller's address.","status":403,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}},"404":{"description":"No such message, or it was sent with another key.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"notFound":{"value":{"type":"/errors/not-found","title":"The requested item does not exist.","status":404,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}}}}},"/api/v1/messages/{publicId}/cancel":{"post":{"tags":["Messages"],"operationId":"CancelMessage","summary":"Cancel a message not yet sent","description":"Stops a message that is still waiting (scheduled, queued or retrying). Once it is being sent, or is final, it can no longer be cancelled. Requires `messages.cancel`.","parameters":[{"name":"publicId","in":"path","required":true,"description":"The message id returned at submission (`publicId`).","schema":{"type":"string","format":"uuid"}}],"requestBody":{"required":false,"content":{"application/json":{"schema":{"type":"object","properties":{"reason":{"type":"string","description":"Why; stored with the message."}}},"example":{"reason":"customer withdrew"}}}},"responses":{"200":{"description":"Cancelled.","content":{"application/json":{"schema":{"$ref":"#/components/schemas/MessageStateResult"},"example":{"publicId":"01a0f78b-9160-77db-8997-e0c1605bbf6f","state":"Cancelled","reason":"customer withdrew","warning":null}}}},"401":{"description":"The API key is missing, unknown, revoked or expired.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"unauthorized":{"value":{"type":"/errors/unauthorized","title":"A valid API key is required.","status":401,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}},"403":{"description":"The key lacks the permission, or is not allowed from the caller's address.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"permission":{"value":{"type":"/errors/forbidden","title":"This API key does not have the messages.submit permission.","status":403,"permission":"messages.submit","correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}},"address":{"value":{"type":"/errors/forbidden","title":"This API key is not allowed from the caller's address.","status":403,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}},"404":{"description":"No such message, or it was sent with another key.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"notFound":{"value":{"type":"/errors/not-found","title":"The requested item does not exist.","status":404,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}},"409":{"description":"The message is already being sent or is final.","content":{"application/problem+json":{"schema":{"$ref":"#/components/schemas/Problem"},"examples":{"invalidState":{"value":{"type":"/errors/invalid-state","title":"The message is not in a state that allows this operation.","status":409,"correlationId":"596e45d4-a2ab-466d-9c07-9d480fefc7be"}}}}}}}}}},"components":{"securitySchemes":{"ApiKey":{"type":"apiKey","in":"header","name":"X-Api-Key","description":"The key exactly as issued: `<prefix>.<secret>`, an 8-character prefix, a dot and a random secret (for example `abcd2345.EXAMPLE-not-a-real-key-0000000000000000000`)."}},"schemas":{"SubmitMessageRequest":{"type":"object","description":"One message. `requestId`, `destination`, `message` and a sender (`sender` or `senderId`) are required. Older field names are still accepted: `to` for destination, `from` for sender, `text` for message; giving both names of a pair with different values is refused (`conflicting_alias`).","required":["requestId","destination","message"],"anyOf":[{"required":["sender"]},{"required":["senderId"]},{"required":["from"]}],"properties":{"requestId":{"type":"string","minLength":1,"maxLength":64,"pattern":"^[!-~]+$","description":"Your id for this business request, unique per API key: 1–64 visible ASCII characters (a UUID is a good choice). Sending the same requestId again with the same content returns the original message (200, `existing: true`) and sends nothing new, so a timed-out request can be retried safely. Different content under a used requestId is refused (409 `idempotency-conflict`).","example":"7f3c2a9e-58b1-4c1e-9a07-5d2f0b6e1c44"},"sender":{"type":"string","description":"The sender the message is sent as (alphanumeric such as `ACME`, a short code or a number), as configured on the platform. A key restricted to some senders can use only those.","example":"ACME"},"senderId":{"type":"integer","format":"int32","description":"The sender by its platform id, instead of `sender`."},"destination":{"type":"string","description":"The recipient in international format: 7–15 digits, with or without a leading `+` (no national prefix).","example":"+96170123456"},"message":{"type":"string","description":"The text. Long text is split into concatenated parts (153 GSM-7 or 67 UCS-2 characters each); at most 10 parts unless the operator raised `messages.max_parts`.","example":"Your code is 4821"},"dataCoding":{"$ref":"#/components/schemas/RequestedCoding","description":"`Auto` (default) picks GSM-7 when the text fits it and UCS-2 otherwise. `Gsm7`, `Latin1` and `Ascii` force that alphabet and refuse text outside it (400 `message.not_gsm7`, …). `Ucs2` and `Utf8` send any Unicode text as UCS-2."},"gateway":{"type":"string","maxLength":100,"description":"Send only through this gateway (its code or name). The message is never moved to another gateway: if this one cannot take it, the request is refused instead."},"requestDlr":{"type":"boolean","default":true,"description":"Ask the SMSC for a delivery receipt."},"priority":{"$ref":"#/components/schemas/MessagePriority","description":"Queue priority; `Normal` by default."},"scheduledAtUtc":{"type":"string","format":"date-time","description":"Send no earlier than this time (UTC, ISO 8601)."},"validityS":{"type":"integer","minimum":60,"maximum":604800,"description":"How long the SMSC should keep trying to deliver, in seconds (1 minute to 7 days)."},"serviceCode":{"type":"string","maxLength":32,"description":"A service tag the operator's routing rules can match on."},"clientReference":{"type":"string","maxLength":64,"description":"Your own reference, stored with the message and searchable. Used as the requestId when that is absent."},"to":{"type":"string","deprecated":true,"description":"Older name of `destination`."},"from":{"type":"string","deprecated":true,"description":"Older name of `sender`."},"text":{"type":"string","deprecated":true,"description":"Older name of `message`."}}},"Problem":{"type":"object","description":"RFC 9457 problem details.","required":["type","title","status"],"properties":{"type":{"type":"string","description":"The kind of problem, for example `/errors/validation`; stable, safe to branch on."},"title":{"type":"string","description":"A human-readable summary."},"status":{"type":"integer"},"correlationId":{"type":"string","format":"uuid","description":"Quote this to the operator."},"errors":{"type":"array","description":"Validation problems (400 only).","items":{"type":"object","required":["path","code","message"],"properties":{"path":{"type":"string"},"code":{"type":"string"},"message":{"type":"string"}}}},"permission":{"type":"string","description":"The missing permission (403 only)."}}},"AttemptOutcome":{"enum":["Ok","Retryable","Permanent","Timeout","NoSession","Throttled","ConnectionLostBeforeWrite","ConnectionLostAfterWrite"]},"BatchItemResult":{"required":["index","status","publicId","problem"],"type":"object","properties":{"index":{"type":"integer","format":"int32"},"status":{"type":"integer","format":"int32"},"publicId":{"type":["null","string"],"format":"uuid"},"problem":{"type":["null","string"]}}},"BatchResponse":{"required":["results"],"type":"object","properties":{"results":{"type":"array","items":{"$ref":"#/components/schemas/BatchItemResult"}}}},"DataCoding":{"enum":["Gsm7","Latin1","Ucs2","Binary","Ascii"],"description":"The coding a message is sent in. DataCoding.Ascii is 7-bit ASCII text whose wire form the gateway chooses\n(SMSC default alphabet, data_coding 0, or IA5, data_coding 1); the SMPP adapter does that mapping."},"DlrStatus":{"enum":["Unknown","Delivered","Expired","Deleted","Undeliverable","Accepted","Rejected","Enroute"],"description":"Delivery receipt status. Persisted codes."},"FailureClass":{"enum":["Retryable","Permanent","Throttled","Unknown"]},"GatewayCandidate":{"required":["gatewayId","priority","weight","health","eligible","reason"],"type":"object","properties":{"gatewayId":{"type":"integer","format":"int32"},"priority":{"type":"integer","format":"int32"},"weight":{"type":"integer","format":"int32"},"health":{"$ref":"#/components/schemas/GatewayHealth"},"eligible":{"type":"boolean"},"reason":{"type":"string"}}},"GatewayHealth":{"enum":["Unknown","Healthy","Degraded","Unavailable","Maintenance"],"description":"Gateway-level health (spec Part 3 §13.1). Persisted codes."},"MessageAcceptedResult":{"required":["publicId","state","parts","dataCoding","routeId","ruleId","gatewayId","forcedConnectionId"],"type":"object","properties":{"publicId":{"type":"string","format":"uuid"},"state":{"$ref":"#/components/schemas/MessageState"},"parts":{"type":"integer","format":"int32"},"dataCoding":{"$ref":"#/components/schemas/DataCoding"},"routeId":{"type":["null","integer"],"format":"int32"},"ruleId":{"type":["null","integer"],"format":"int32"},"gatewayId":{"type":["null","integer"],"format":"int32"},"forcedConnectionId":{"type":["null","integer"],"format":"int32"},"existing":{"type":"boolean","default":false},"requestId":{"type":["null","string"]},"messageId":{"type":"string","format":"uuid"}},"description":"`Existing` is true when the request id matched an earlier message of the same client (spec §7.3: 200, not 202);\n        `State` is then that message's current state. `MessageId` is the message's public id (`PublicId` kept for existing clients)."},"MessageAttemptView":{"required":["id","atUtc","messagePartId","attemptNo","gatewayId","connectionId","outcome","failureClass","smscStatus","smscMessageIdRaw","sequenceNumber","latencyMs","pduWrittenAtUtc","nodeId"],"type":"object","properties":{"id":{"type":"integer","format":"int64"},"atUtc":{"type":"string","format":"date-time"},"messagePartId":{"type":"integer","format":"int64"},"attemptNo":{"type":"integer","format":"uint8"},"gatewayId":{"type":"integer","format":"int32"},"connectionId":{"type":"integer","format":"int32"},"outcome":{"$ref":"#/components/schemas/AttemptOutcome"},"failureClass":{"oneOf":[{"type":"null"},{"$ref":"#/components/schemas/FailureClass"}]},"smscStatus":{"type":["null","integer"],"format":"uint32"},"smscMessageIdRaw":{"type":["null","string"]},"sequenceNumber":{"type":["null","integer"],"format":"uint32"},"latencyMs":{"type":["null","integer"],"format":"uint32"},"pduWrittenAtUtc":{"type":["null","string"],"format":"date-time"},"nodeId":{"type":"string"},"effectiveTps":{"type":["null","number"],"format":"double"},"smscMessageId":{"type":["null","string"]},"dlrStatus":{"oneOf":[{"type":"null"},{"$ref":"#/components/schemas/DlrStatus"}]},"dlrAtUtc":{"type":["null","string"],"format":"date-time"}}},"MessageDetailView":{"required":["message","parts","attempts","receipts","timeline","routingDecisions"],"type":"object","properties":{"message":{"$ref":"#/components/schemas/MessageSummary"},"parts":{"type":"array","items":{"$ref":"#/components/schemas/MessagePartView"}},"attempts":{"type":"array","items":{"$ref":"#/components/schemas/MessageAttemptView"}},"receipts":{"type":"array","items":{"$ref":"#/components/schemas/MessageReceiptView"}},"timeline":{"type":"array","items":{"$ref":"#/components/schemas/TimelineEntry"}},"routingDecisions":{"type":"array","items":{"$ref":"#/components/schemas/RoutingDecisionRecord"}}}},"MessageOrigin":{"enum":["Api","Console","System"]},"MessagePartView":{"required":["id","seq","udhRef","state","gatewayId","connectionId","smscMessageId","smscMessageIdRaw","attemptCount","finalStatus","dlrErrorCode","submittedAtUtc","finalAtUtc"],"type":"object","properties":{"id":{"type":"integer","format":"int64"},"seq":{"type":"integer","format":"uint8"},"udhRef":{"type":["null","integer"],"format":"uint16"},"state":{"$ref":"#/components/schemas/PartState"},"gatewayId":{"type":["null","integer"],"format":"int32"},"connectionId":{"type":["null","integer"],"format":"int32"},"smscMessageId":{"type":["null","string"]},"smscMessageIdRaw":{"type":["null","string"]},"attemptCount":{"type":"integer","format":"int32"},"finalStatus":{"oneOf":[{"type":"null"},{"$ref":"#/components/schemas/DlrStatus"}]},"dlrErrorCode":{"type":["null","string"]},"submittedAtUtc":{"type":["null","string"],"format":"date-time"},"finalAtUtc":{"type":["null","string"],"format":"date-time"}}},"MessagePriority":{"enum":["Low","Normal","High","Urgent"]},"MessageReceiptView":{"required":["id","receivedAtUtc","gatewayId","connectionId","smscMessageId","messagePartId","status","errorCode","submitDateUtc","doneDateUtc","text","isDuplicate","isMalformed","matchedAtUtc"],"type":"object","properties":{"id":{"type":"integer","format":"int64"},"receivedAtUtc":{"type":"string","format":"date-time"},"gatewayId":{"type":"integer","format":"int32"},"connectionId":{"type":"integer","format":"int32"},"smscMessageId":{"type":"string"},"messagePartId":{"type":["null","integer"],"format":"int64"},"status":{"$ref":"#/components/schemas/DlrStatus"},"errorCode":{"type":["null","string"]},"submitDateUtc":{"type":["null","string"],"format":"date-time"},"doneDateUtc":{"type":["null","string"],"format":"date-time"},"text":{"type":["null","string"]},"isDuplicate":{"type":"boolean"},"isMalformed":{"type":"boolean"},"matchedAtUtc":{"type":["null","string"],"format":"date-time"},"messageAttemptId":{"type":["null","integer"],"format":"int64"},"normalizeError":{"type":["null","string"]}}},"MessageState":{"enum":["Accepted","Routing","Queued","Claimed","Sending","Submitted","Unknown","Retrying","Delivered","Undelivered","Expired","Rejected","Failed","Cancelled"],"description":"Outbound message state (spec Part 4 §7.2). Persisted codes; never renumber."},"MessageStateResult":{"required":["publicId","state","reason"],"type":"object","properties":{"publicId":{"type":"string","format":"uuid"},"state":{"$ref":"#/components/schemas/MessageState"},"reason":{"type":["null","string"]},"warning":{"type":["null","string"]}}},"MessageSummary":{"required":["publicId","id","createdAtUtc","origin","senderId","src","dst","dstCountry","dstOperator","body","dataCoding","partCount","priority","state","requestDlr","routeId","routingRuleId","gatewayId","forcedConnectionId","attemptCount","rerouteCount","nextAttemptAtUtc","finalStatus","failureReason","lastSmscStatus","scheduledAtUtc","expiresAtUtc","routedAtUtc","queuedAtUtc","submittedAtUtc","finalAtUtc","updatedAtUtc","clientReference","serviceCode","submittedByUserId"],"type":"object","properties":{"publicId":{"type":"string","format":"uuid"},"id":{"type":"integer","format":"int64"},"createdAtUtc":{"type":"string","format":"date-time"},"origin":{"$ref":"#/components/schemas/MessageOrigin"},"senderId":{"type":"integer","format":"int32"},"src":{"type":"string"},"dst":{"type":"string"},"dstCountry":{"type":["null","string"]},"dstOperator":{"type":["null","string"]},"body":{"type":"string"},"dataCoding":{"$ref":"#/components/schemas/DataCoding"},"partCount":{"type":"integer","format":"int32"},"priority":{"$ref":"#/components/schemas/MessagePriority"},"state":{"$ref":"#/components/schemas/MessageState"},"requestDlr":{"type":"boolean"},"routeId":{"type":["null","integer"],"format":"int32"},"routingRuleId":{"type":["null","integer"],"format":"int32"},"gatewayId":{"type":["null","integer"],"format":"int32"},"forcedConnectionId":{"type":["null","integer"],"format":"int32"},"attemptCount":{"type":"integer","format":"int32"},"rerouteCount":{"type":"integer","format":"int32"},"nextAttemptAtUtc":{"type":["null","string"],"format":"date-time"},"finalStatus":{"oneOf":[{"type":"null"},{"$ref":"#/components/schemas/DlrStatus"}]},"failureReason":{"type":["null","string"]},"lastSmscStatus":{"type":["null","integer"],"format":"uint32"},"scheduledAtUtc":{"type":["null","string"],"format":"date-time"},"expiresAtUtc":{"type":["null","string"],"format":"date-time"},"routedAtUtc":{"type":["null","string"],"format":"date-time"},"queuedAtUtc":{"type":["null","string"],"format":"date-time"},"submittedAtUtc":{"type":["null","string"],"format":"date-time"},"finalAtUtc":{"type":["null","string"],"format":"date-time"},"updatedAtUtc":{"type":"string","format":"date-time"},"clientReference":{"type":["null","string"]},"serviceCode":{"type":["null","string"]},"submittedByUserId":{"type":["null","integer"],"format":"int32"},"requestId":{"type":["null","string"]},"requestedGatewayId":{"type":["null","integer"],"format":"int32"},"requestedDataCoding":{"oneOf":[{"type":"null"},{"$ref":"#/components/schemas/RequestedCoding"}]},"apiKeyId":{"type":["null","integer"],"format":"int32"}}},"PageOfMessageSummary":{"required":["items","nextCursor"],"type":"object","properties":{"items":{"type":"array","items":{"$ref":"#/components/schemas/MessageSummary"}},"nextCursor":{"type":["null","string"]}}},"PartState":{"enum":["Pending","Sending","Submitted","Unknown","Delivered","Undelivered","Expired","Rejected","Failed","Cancelled"]},"RequestedCoding":{"enum":["Auto","Gsm7","Latin1","Ucs2","Ascii","Utf8"],"description":"The coding an MT request asks for (spec Part 4 §7.1 step 3): automatic detection, a forced SMPP alphabet, or a\ncontent class. RequestedCoding.Ascii is printable 7-bit ASCII; the gateway decides whether it travels as the SMSC\ndefault alphabet or IA5 (the adapter's job). RequestedCoding.Utf8 is any Unicode text; SMPP has no UTF-8 coding, so\nit is always sent as UCS-2 and never downgraded to a 7-bit alphabet, even when the text would fit one.","default":"Auto"},"RoutingDecisionRecord":{"required":["atUtc","ruleId","routeId","routeName","seed","candidates","chosenGatewayId","excludedGatewayIds","rerouteCount","outcome"],"type":"object","properties":{"atUtc":{"type":"string","format":"date-time"},"ruleId":{"type":["null","integer"],"format":"int32"},"routeId":{"type":["null","integer"],"format":"int32"},"routeName":{"type":"string"},"seed":{"type":"integer","format":"int32"},"candidates":{"type":"array","items":{"$ref":"#/components/schemas/GatewayCandidate"}},"chosenGatewayId":{"type":["null","integer"],"format":"int32"},"excludedGatewayIds":{"type":"array","items":{"type":"integer","format":"int32"}},"rerouteCount":{"type":"integer","format":"int32"},"outcome":{"type":"string"}},"description":"One routing decision as stored on the message (`messages.details.routing[]`): rule, route, seed, every candidate with its health and reason, the pick, exclusions and outcome."},"TimelineEntry":{"required":["atUtc","kind","summary","detail"],"type":"object","properties":{"atUtc":{"type":"string","format":"date-time"},"kind":{"type":"string"},"summary":{"type":"string"},"detail":{"type":["null","string"]}}}}}}</script>
+<script>
+(function () {
+  const spec = JSON.parse(document.getElementById('spec').textContent);
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const inline = (s) => esc(s)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  // Descriptions are Markdown with hard-wrapped lines: blank lines split paragraphs, "## " starts a heading.
+  function md(text) {
+    if (!text) return '';
+    return String(text).split(/\n\s*\n/).map((block) => {
+      const t = block.trim();
+      if (!t) return '';
+      const lines = t.split('\n');
+      if (/^##\s/.test(lines[0])) {
+        const head = '<h3 id="g-' + slug(lines[0].replace(/^##\s+/, '')) + '">' + inline(lines[0].replace(/^##\s+/, '')) + '</h3>';
+        const rest = lines.slice(1).join(' ').trim();
+        return head + (rest ? '<p>' + inline(rest) + '</p>' : '');
+      }
+      if (lines.every((l) => /^\s*-\s/.test(l))) return '<ul>' + lines.map((l) => '<li>' + inline(l.replace(/^\s*-\s+/, '')) + '</li>').join('') + '</ul>';
+      return '<p>' + inline(lines.join(' ')) + '</p>';
+    }).join('');
+  }
+  const refName = (ref) => ref.split('/').pop();
+  const schemaOf = (s) => (s && s.$ref ? spec.components.schemas[refName(s.$ref)] : s);
+  function typeOf(s) {
+    if (!s) return 'any';
+    if (s.$ref) return '<a class="schema-link" href="#t-' + slug(refName(s.$ref)) + '">' + esc(refName(s.$ref)) + '</a>';
+    for (const k of ['oneOf', 'anyOf', 'allOf']) if (s[k]) {
+      const parts = s[k].filter((x) => x.type !== 'null').map(typeOf);
+      const nullable = s[k].some((x) => x.type === 'null');
+      return parts.join(' | ') + (nullable ? ' | null' : '');
+    }
+    let t = Array.isArray(s.type) ? s.type.filter((x) => x !== 'null').join(' | ') + (s.type.includes('null') ? ' | null' : '') : (s.type || (s.enum ? 'enum' : 'object'));
+    if (s.type === 'array' || (Array.isArray(s.type) && s.type.includes('array'))) t = typeOf(s.items) + '[]' + (Array.isArray(s.type) && s.type.includes('null') ? ' | null' : '');
+    if (s.format && !/^(int32|int64|double|float)$/.test(s.format)) t += ' <span title="format">(' + esc(s.format) + ')</span>';
+    return t;
+  }
+  function limits(s) {
+    const out = [];
+    if (s.minLength != null || s.maxLength != null) out.push((s.minLength ?? 0) + '–' + (s.maxLength ?? '∞') + ' chars');
+    if (s.minimum != null || s.maximum != null) out.push('range ' + (s.minimum ?? '−∞') + '–' + (s.maximum ?? '∞'));
+    if (s.default !== undefined) out.push('default ' + JSON.stringify(s.default));
+    return out.length ? '<div class="enum"><code>' + out.map(esc).join('</code><code>') + '</code></div>' : '';
+  }
+  function enumOf(s) {
+    const e = s && (s.enum || (s.$ref && schemaOf(s).enum));
+    return e ? '<div class="enum">' + e.filter((v) => v !== null).map((v) => '<code>' + esc(v) + '</code>').join('') + '</div>' : '';
+  }
+  function fieldsTable(schema) {
+    const s = schemaOf(schema);
+    if (!s || !s.properties) return '';
+    const req = new Set(s.required || []);
+    const rows = Object.entries(s.properties).map(([name, p]) =>
+      '<tr><td class="name">' + esc(name) + (req.has(name) ? '<span class="req">required</span>' : '') + '</td>' +
+      '<td class="type">' + typeOf(p) + '</td>' +
+      '<td class="desc">' + inline(p.description || (p.$ref ? schemaOf(p).description : '') || '') + (p.enum ? enumOf(p) : '') + limits(p) + '</td></tr>').join('');
+    return '<div class="tablewrap"><table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+  function codebox(text, label) {
+    return '<div class="codebox"><button class="copy" type="button" aria-label="Copy ' + esc(label) + '">Copy</button><pre><code>' + esc(text) + '</code></pre></div>';
+  }
+  const host = () => ($('host').value.trim().replace(/^https?:\/\//, '').replace(/\/+$/, '') || 'smppgw.example.com');
+  function curl(method, path, op, body) {
+    let p = path;
+    for (const prm of op.parameters || []) if (prm.in === 'path') p = p.replace('{' + prm.name + '}', prm.example || (prm.schema && prm.schema.example) || '01a0f78b-9160-77db-8997-e0c1605bbf6f');
+    const lines = ['curl -X ' + method + ' "https://' + host() + p + '" \\', '  -H "X-Api-Key: <your API key>"'];
+    if (body !== undefined) {
+      lines[lines.length - 1] += ' \\';
+      lines.push('  -H "Content-Type: application/json" \\');
+      lines.push("  -d '" + JSON.stringify(body, null, 2).replace(/'/g, "'\\''") + "'");
+    }
+    return lines.join('\n');
+  }
+  function examplesOf(content) {
+    if (!content) return [];
+    if (content.examples) return Object.entries(content.examples).map(([k, v]) => ({ name: v.summary || k, value: v.value }));
+    if (content.example !== undefined) return [{ name: 'Example', value: content.example }];
+    return [];
+  }
+  const permOf = (op) => { const m = /Requires `([a-z.]+)`/.exec(op.description || ''); return m ? m[1] : null; };
+
+  // --- header, guide ---
+  $('title').textContent = 'Send and follow SMS messages';
+  $('lede').innerHTML = inline(spec.info.description.split(/\n\s*\n/)[0]);
+  $('ver').textContent = 'Version ' + spec.info.version + ' · OpenAPI ' + spec.openapi;
+  const guideMd = spec.info.description.split(/\n\s*\n/).slice(1).join('\n\n');
+  const scheme = spec.components.securitySchemes && spec.components.securitySchemes.ApiKey;
+  $('guide').innerHTML = md(guideMd)
+    + '<h3 id="g-message-states">Message states</h3>'
+    + '<div class="states" aria-label="Normal progress of a message"><span class="s">Routing</span><i>→</i><span class="s">Queued</span><i>→</i><span class="s">Sending</span><i>→</i><span class="s">Submitted</span><i>→</i><span class="s">Delivered</span></div>'
+    + '<div class="states" aria-label="Other final states"><span class="eyebrow" style="margin-right:4px">Other final states</span><span class="f">Undelivered</span><span class="f">Expired</span><span class="f">Rejected</span><span class="f">Failed</span><span class="f">Cancelled</span><span class="f">Unknown</span></div>'
+    + (scheme ? '<h3 id="g-the-api-key-header">The API key header</h3><p>' + inline(scheme.description) + '</p>' + codebox('X-Api-Key: <your API key>', 'header') : '');
+  const guideHeads = [...$('guide').querySelectorAll('h3')];
+  $('nav-guide').innerHTML = guideHeads.map((h) => '<li><a href="#' + h.id + '">' + esc(h.textContent) + '</a></li>').join('');
+
+  // --- endpoints ---
+  const ops = [];
+  for (const [path, item] of Object.entries(spec.paths)) for (const [m, op] of Object.entries(item)) ops.push({ path, method: m.toUpperCase(), op });
+  $('nav-ops').innerHTML = ops.map((o) => '<li><a href="#op-' + slug(o.op.operationId) + '"><span class="method ' + o.method + '" style="padding:2px 5px;font-size:10px">' + o.method + '</span><span>' + esc(o.op.summary) + '</span></a></li>').join('');
+  const opsEl = $('ops');
+  opsEl.innerHTML = ops.map((o, i) => {
+    const op = o.op, perm = permOf(op);
+    const params = (op.parameters || []).map((p) =>
+      '<tr><td class="name">' + esc(p.name) + (p.required ? '<span class="req">required</span>' : '') + '</td><td class="type">' + esc(p.in) + ' · ' + typeOf(p.schema) + '</td><td class="desc">' + inline(p.description || '') + enumOf(p.schema) + '</td></tr>').join('');
+    const body = op.requestBody && op.requestBody.content && op.requestBody.content['application/json'];
+    const exs = examplesOf(body);
+    const responses = Object.entries(op.responses).map(([code, r]) => {
+      const c = r.content && (r.content['application/json'] || r.content['application/problem+json']);
+      const rex = examplesOf(c);
+      const schema = c && c.schema;
+      return '<details class="resp"><summary><span class="code c' + code[0] + '">' + esc(code) + '</span><span>' + inline(r.description || '') + '</span>' +
+        (schema ? '<span class="schema-link" style="margin-left:auto">' + typeOf(schema) + '</span>' : '') + '</summary><div>' +
+        (rex.length ? rex.map((x) => (rex.length > 1 ? '<span class="eyebrow">' + esc(x.name) + '</span>' : '') + codebox(JSON.stringify(x.value, null, 2), 'example')).join('') : '<p class="lede" style="font-size:13.5px">No body.</p>') +
+        '</div></details>';
+    }).join('');
+    return '<article class="op" id="op-' + slug(op.operationId) + '">' +
+      '<div class="ophead"><span class="method ' + o.method + '">' + o.method + '</span><span class="path">' + esc(o.path) + '</span>' + (perm ? '<span class="perm">needs ' + esc(perm) + '</span>' : '') + '</div>' +
+      '<div class="prose"><h3>' + esc(op.summary) + '</h3>' + md((op.description || '').replace(/\s*Requires `[a-z.]+`\.?/, '')) + '</div>' +
+      (params ? '<div class="block"><span class="eyebrow">Parameters</span><div class="tablewrap"><table><thead><tr><th>Name</th><th>In · type</th><th>Description</th></tr></thead><tbody>' + params + '</tbody></table></div></div>' : '') +
+      (body ? '<div class="block"><span class="eyebrow">Request body · ' + typeOf(body.schema) + '</span>' + (schemaOf(body.schema).description ? '<p>' + inline(schemaOf(body.schema).description) + '</p>' : '') + fieldsTable(body.schema) + '</div>' : '') +
+      '<div class="block"><span class="eyebrow">Try it</span>' +
+      (exs.length > 1 ? '<div class="tabs" role="tablist" aria-label="Examples">' + exs.map((x, j) => '<button type="button" role="tab" id="ex-' + i + '-' + j + '" aria-selected="' + (j === 0) + '" data-op="' + i + '" data-ex="' + j + '">' + esc(x.name) + '</button>').join('') + '</div>' : '') +
+      '<div data-curl="' + i + '"></div></div>' +
+      '<div class="block"><span class="eyebrow">Responses</span><div class="responses">' + responses + '</div></div>' +
+      '</article>';
+  }).join('');
+  const chosen = ops.map(() => 0);
+  function renderCurls() {
+    ops.forEach((o, i) => {
+      const body = o.op.requestBody && o.op.requestBody.content && o.op.requestBody.content['application/json'];
+      const exs = examplesOf(body);
+      const value = body ? (exs[chosen[i]] ? exs[chosen[i]].value : {}) : undefined;
+      opsEl.querySelector('[data-curl="' + i + '"]').innerHTML = codebox(curl(o.method, o.path, o.op, value), 'request');
+    });
+  }
+  opsEl.addEventListener('click', (e) => {
+    const tab = e.target.closest('.tabs button');
+    if (!tab) return;
+    const i = +tab.dataset.op;
+    chosen[i] = +tab.dataset.ex;
+    tab.parentElement.querySelectorAll('button').forEach((b) => b.setAttribute('aria-selected', String(b === tab)));
+    renderCurls();
+  });
+
+  // --- types ---
+  const types = Object.entries(spec.components.schemas);
+  $('nav-types').innerHTML = types.map(([n]) => '<li><a class="mono" href="#t-' + slug(n) + '" style="font-size:12.5px">' + esc(n) + '</a></li>').join('');
+  $('types').innerHTML = types.map(([n, s]) =>
+    '<article class="type" id="t-' + slug(n) + '"><h3>' + esc(n) + '</h3>' + (s.description ? '<p>' + inline(s.description) + '</p>' : '') +
+    (s.properties ? fieldsTable(s) : s.enum ? '<div><span class="eyebrow">Values</span>' + enumOf(s) + '</div>' : '<p class="lede" style="font-size:13.5px">' + typeOf(s) + '</p>') + '</article>').join('');
+
+  $('foot').innerHTML = 'The OpenAPI description itself: <a href="messages-api.openapi.yaml">messages-api.openapi.yaml</a> (import it into Postman, Insomnia or a code generator). Generated from the platform’s OpenAPI ' + esc(spec.openapi) + ' description, version ' + esc(spec.info.version) + '. Errors use <code>application/problem+json</code>; quote the <code>correlationId</code> to your operator.';
+
+  // --- host, copy ---
+  try { const saved = localStorage.getItem('smppgw-api-host'); if (saved) $('host').value = saved; } catch (_) {}
+  $('host').addEventListener('input', () => { try { localStorage.setItem('smppgw-api-host', host()); } catch (_) {} renderCurls(); });
+  renderCurls();
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.copy');
+    if (!btn) return;
+    const text = btn.nextElementSibling.textContent;
+    const done = (ok) => { btn.textContent = ok ? 'Copied' : 'Select and copy'; setTimeout(() => { btn.textContent = 'Copy'; }, 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => done(true), () => { const r = document.createRange(); r.selectNodeContents(btn.nextElementSibling); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); done(false); });
+    } else done(false);
+  });
+})();
+</script>
+
+</body>
+</html>
